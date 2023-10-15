@@ -55,6 +55,7 @@ fn main() -> Result<(), DynError>{
                 }
                 _ => panic!()
             };
+            response.state = [s_state.front, s_state.middle, s_state.rear];
             response
         }),
     );
