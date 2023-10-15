@@ -28,26 +28,37 @@ fn main() -> Result<(), DynError>{
         Box::new(move |msg, _header| {
             let mut response = SolenoidStateSrv_Response::new().unwrap();
             pr_info!(logger, "recv: {:?}", msg);
+
+            let state_request = if msg.state >= 0 {
+                msg.state == 1
+            }else{
+                match msg.axle_position {
+                    0 => !s_state.front,
+                    1 => !s_state.middle,
+                    2 => !s_state.rear,
+                    _ => panic!()
+                }
+            };
             response.result = match msg.axle_position {
-                0 => if s_state.front && !s_state.middle || !s_state.middle && !s_state.rear || s_state.front && !s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, !s_state.front);
-                    s_state.front ^= true;
+                0 => if !state_request && !s_state.middle || !s_state.middle && !s_state.rear || !state_request && !s_state.rear {
+                    publish_sd_state(&logger, &publisher, msg.axle_position, state_request);
+                    s_state.front = state_request;
                     true
                 }else {
                     pr_info!(logger, "却下");
                     false
                 },
-                1 => if !s_state.front && s_state.middle || s_state.middle && !s_state.rear || !s_state.front && !s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, !s_state.middle);
-                    s_state.middle ^= true;
+                1 => if !s_state.front && !state_request || !state_request && !s_state.rear || !s_state.front && !s_state.rear {
+                    publish_sd_state(&logger, &publisher, msg.axle_position, state_request);
+                    s_state.middle = state_request;
                     true
                 }else {
                     pr_info!(logger, "却下");
                     false
                 }
-                2 => if !s_state.front && !s_state.middle || !s_state.middle && s_state.rear || !s_state.front && s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, !s_state.rear);
-                    s_state.rear ^= true;
+                2 => if !s_state.front && !s_state.middle || !s_state.middle && !state_request || !s_state.front && !state_request {
+                    publish_sd_state(&logger, &publisher, msg.axle_position, state_request);
+                    s_state.rear = state_request;
                     true
                 }else {
                     pr_info!(logger, "却下");
@@ -55,6 +66,7 @@ fn main() -> Result<(), DynError>{
                 }
                 _ => panic!()
             };
+            response.state = [s_state.front, s_state.middle, s_state.rear];
             response
         }),
     );
