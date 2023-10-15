@@ -29,25 +29,25 @@ fn main() -> Result<(), DynError>{
             let mut response = SolenoidStateSrv_Response::new().unwrap();
             pr_info!(logger, "recv: {:?}", msg);
             response.result = match msg.axle_position {
-                0 => if !msg.state && !s_state.middle || !s_state.middle && !s_state.rear || !msg.state && !s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, msg.state);
-                    s_state.front = msg.state;
+                0 => if s_state.front && !s_state.middle || !s_state.middle && !s_state.rear || s_state.front && !s_state.rear {
+                    publish_sd_state(&logger, &publisher, msg.axle_position, !s_state.front);
+                    s_state.front ^= true;
                     true
                 }else {
                     pr_info!(logger, "却下");
                     false
                 },
-                1 => if !s_state.front && !msg.state || !msg.state && !s_state.rear || !s_state.front && !s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, msg.state);
-                    s_state.middle = msg.state;
+                1 => if !s_state.front && s_state.middle || s_state.middle && !s_state.rear || !s_state.front && !s_state.rear {
+                    publish_sd_state(&logger, &publisher, msg.axle_position, !s_state.middle);
+                    s_state.middle ^= true;
                     true
                 }else {
                     pr_info!(logger, "却下");
                     false
                 }
-                2 => if !s_state.front && !s_state.middle || !s_state.middle && !msg.state || !s_state.front && !msg.state {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, msg.state);
-                    s_state.rear = msg.state;
+                2 => if !s_state.front && !s_state.middle || !s_state.middle && s_state.rear || !s_state.front && s_state.rear {
+                    publish_sd_state(&logger, &publisher, msg.axle_position, !s_state.rear);
+                    s_state.rear ^= true;
                     true
                 }else {
                     pr_info!(logger, "却下");
@@ -55,7 +55,6 @@ fn main() -> Result<(), DynError>{
                 }
                 _ => panic!()
             };
-            response.state = [s_state.front, s_state.middle, s_state.rear];
             response
         }),
     );
