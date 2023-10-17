@@ -41,7 +41,7 @@ fn main() -> Result<(), DynError>{
             };
             response.result = match msg.axle_position {
                 0 => if !state_request && !s_state.middle || !s_state.middle && !s_state.rear || !state_request && !s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, state_request);
+                    publish_sd_state(&logger, &publisher, msg.axle_position, !state_request);
                     s_state.front = state_request;
                     true
                 }else {
@@ -49,7 +49,7 @@ fn main() -> Result<(), DynError>{
                     false
                 },
                 1 => if !s_state.front && !state_request || !state_request && !s_state.rear || !s_state.front && !s_state.rear {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, state_request);
+                    publish_sd_state(&logger, &publisher, msg.axle_position, !state_request);
                     s_state.middle = state_request;
                     true
                 }else {
@@ -57,7 +57,7 @@ fn main() -> Result<(), DynError>{
                     false
                 }
                 2 => if !s_state.front && !s_state.middle || !s_state.middle && !state_request || !s_state.front && !state_request {
-                    publish_sd_state(&logger, &publisher, msg.axle_position, state_request);
+                    publish_sd_state(&logger, &publisher, msg.axle_position, !state_request);
                     s_state.rear = state_request;
                     true
                 }else {
